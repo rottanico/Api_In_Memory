@@ -3,8 +3,8 @@ package controller
 import (
 	"DB_In_Memory/methods"
 	stre "DB_In_Memory/structures"
-	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/go-playground/form"
 
@@ -14,7 +14,7 @@ import (
 type Controller struct {
 }
 
-func (r *Controller) Get_All(context echo.Context) error {
+func (r *Controller) Get_Courses(context echo.Context) error {
 	result := methods.GetAllDB()
 	return context.JSON(http.StatusOK, result)
 }
@@ -24,22 +24,45 @@ func (r *Controller) Post_Course(context echo.Context) error {
 	if context.FormValue("name") != "" { //verifica que los datos viajan en tipo form value o en el cuerpo de la peticion
 		decoder := form.NewDecoder()
 		form, _ := context.FormParams()
-		err := decoder.Decode(&c, form)
 
-		if err != nil {
-			fmt.Println("entró aca")
+		if err := decoder.Decode(&c, form); err != nil {
 			return context.JSON(http.StatusBadRequest, err)
 		}
 	} else {
-		err := context.Bind(&c)
-		if err != nil {
-			fmt.Println("o aca?")
+
+		if err := context.Bind(&c); err != nil {
 			return context.JSON(http.StatusBadRequest, err)
 		}
 	}
-	res := methods.PostCourseDB(*c)
-	if res {
+
+	if res := methods.PostCourseDB(*c); res {
 		return context.String(http.StatusOK, "successful order")
 	}
 	return context.String(http.StatusInternalServerError, "method not performed")
+}
+func (c *Controller) Get_Course(context echo.Context) error {
+	id, err := strconv.Atoi(context.QueryParam("id"))
+	if err != nil {
+		return context.String(http.StatusBadRequest, "id must be a number")
+	}
+
+	if value, state := methods.GetCourseDB(id); state {
+		return context.JSON(http.StatusOK, value)
+	} else {
+
+		return context.String(http.StatusInternalServerError, "method not performed")
+	}
+
+}
+func (c *Controller) Delete_Course(context echo.Context) error {
+	id, err := strconv.Atoi(context.QueryParam("id"))
+	if err != nil {
+		return context.String(http.StatusBadRequest, "id must be a number")
+	}
+	if status := methods.DeleteCourseDB(id); status {
+		return context.String(http.StatusOK, "element has been deleted")
+	} else {
+		return context.String(http.StatusInternalServerError, "method not performed")
+	}
+
 }
