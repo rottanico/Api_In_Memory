@@ -12,4 +12,5 @@ func Router(e *echo.Echo) {
 	e.GET("/Course", router.Get_Course)
 	e.GET("/Courses", router.Get_Courses)
 	e.DELETE("/Course", router.Delete_Course)
+	e.PUT("/Course", router.Put_Course)
 }

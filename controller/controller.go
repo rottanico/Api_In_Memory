@@ -66,3 +66,29 @@ func (c *Controller) Delete_Course(context echo.Context) error {
 	}
 
 }
+func (r *Controller) Put_Course(context echo.Context) error {
+	id, err := strconv.Atoi(context.QueryParam("id"))
+
+	if err != nil {
+		return context.String(http.StatusBadRequest, "id must be a number")
+	}
+	course := new(stre.Course)
+
+	if context.FormValue("name") != "" { //verifica que los datos viajan en tipo form value o en el cuerpo de la peticion
+		decoder := form.NewDecoder()
+		form, _ := context.FormParams()
+		if err := decoder.Decode(&course, form); err != nil {
+			return context.JSON(http.StatusBadRequest, err)
+		}
+	} else {
+		if err := context.Bind(&course); err != nil {
+			return context.JSON(http.StatusBadRequest, err)
+		}
+	}
+	if res := methods.PutCourseDB(*course, id); res {
+		return context.String(http.StatusOK, "element has been modified")
+	} else {
+		return context.String(http.StatusInternalServerError, "method not performed")
+	}
+
+}

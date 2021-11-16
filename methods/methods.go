@@ -3,7 +3,10 @@ package methods
 import (
 	stre "DB_In_Memory/structures"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io/ioutil"
+	"reflect"
 )
 
 func BinarySearch(s []stre.Course, k int) int {
@@ -102,4 +105,49 @@ func GetCourseDB(key int) (stre.Course, bool) {
 
 	ret := stre.Course{}
 	return ret, false
+}
+func PutCourseDB(value stre.Course, key int) bool {
+	Nvalue := new(stre.Course)
+	if _, res := GetCourseDB(key); res {
+
+		v := reflect.ValueOf(value)
+
+		typeOfS := v.Type()
+
+		for i := 0; i < v.NumField(); i++ {
+
+			err := SetField(Nvalue, typeOfS.Field(i).Name, v.Field(i).Interface())
+			if err != nil {
+				return false
+			}
+		}
+
+		if res = PostCourseDB(*Nvalue); res {
+			return true
+		}
+	}
+
+	return false
+}
+
+func SetField(obj interface{}, name string, value interface{}) error {
+	structValue := reflect.ValueOf(obj).Elem()
+	structFieldValue := structValue.FieldByName(name)
+
+	if !structFieldValue.IsValid() {
+		return fmt.Errorf("No such field: %s in obj", name)
+	}
+
+	if !structFieldValue.CanSet() {
+		return fmt.Errorf("Cannot set %s field value", name)
+	}
+
+	structFieldType := structFieldValue.Type()
+	val := reflect.ValueOf(value)
+	if structFieldType != val.Type() {
+		return errors.New("Provided value type didn't match obj field type")
+	}
+
+	structFieldValue.Set(val)
+	return nil
 }
